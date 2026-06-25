@@ -9,19 +9,30 @@ namespace nanoFramework.EspNow.Receiver
     {
         public static void Main()
         {
-            Debug.WriteLine("ESP-NOW receiver starting...");
-
-            using (var controller = new EspNowController())
+            byte[] localMasterKey = new byte[]
             {
+                0x10, 0x11, 0x12, 0x13,
+                0x14, 0x15, 0x16, 0x17,
+                0x18, 0x19, 0x1A, 0x1B,
+                0x1C, 0x1D, 0x1E, 0x1F
+            };
+
+            Debug.WriteLine("ESP-NOW receiver starting...");
+            try
+            {
+                var senderMacAddress = new byte[] { 0x84, 0xFC, 0xE6, 0x65, 0xA5, 0x10 };
+                var controller = new EspNowController();
                 controller.DataReceived += Controller_DataReceived;
                 controller.DataSent += Controller_DataSent;
-
-                controller.AddPeer(EspNowController.BROADCASTMAC, 0);
-
+                controller.AddPeer(senderMacAddress, 0, true, localMasterKey);
                 Debug.WriteLine("Receiver ready");
-
-                Thread.Sleep(Timeout.Infinite);
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error: {ex.Message}");
+            }
+            
+            Thread.Sleep(Timeout.Infinite);
         }
 
         private static void Controller_DataReceived(object sender, DataReceivedEventArgs e)
