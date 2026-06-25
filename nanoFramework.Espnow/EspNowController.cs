@@ -65,11 +65,28 @@ namespace nanoFramework.EspNow
         /// <summary>
         /// Add peer to which data will be sent.
         /// </summary>
-        /// <param name="peerMac">MAC address of peer. Use BROADCASTMAC for broadcasting.</param>
+        /// <param name="peerMac">MAC address of peer.</param>
         /// <param name="channel">WiFi channel to be used.</param>
-        public void AddPeer(byte[] peerMac, byte channel)
+        /// <param name="encrypted">True to enable ESP-NOW encryption for this peer.</param>
+        /// <param name="localMasterKey">16-byte local master key used when encryption is enabled.</param>
+        public void AddPeer(byte[] peerMac, byte channel, bool encrypted, byte[] localMasterKey)
         {
-            var nret = NativeEspNowAddPeer(peerMac, channel);
+            if (peerMac != null && peerMac.Length != 6)
+            {
+                throw new ArgumentException("peerMac must be 6 bytes long", nameof(peerMac));
+            }
+
+            if (localMasterKey != null && localMasterKey.Length != 16)
+            {
+                throw new ArgumentException("localMasterKey must be 16 bytes long", nameof(localMasterKey));
+            }
+
+            if (encrypted && peerMac.Equals(BROADCASTMAC))
+            {
+                throw new ArgumentException("Cannot enable encryption for broadcast peer", nameof(peerMac));
+            }
+
+            var nret = NativeEspNowAddPeer(peerMac, channel, encrypted, localMasterKey);
             if (nret != 0)
             {
                 throw new EspNowException(nret);
@@ -203,7 +220,7 @@ namespace nanoFramework.EspNow
         private extern int NativeEspNowSend(byte[] peerMac, byte[] data, int dataLen);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private extern int NativeEspNowAddPeer(byte[] peerMac, byte channel);
+        private extern int NativeEspNowAddPeer(byte[] peerMac, byte channel, bool encrypted, byte[] localMasterKey);
     }
 
     internal class DataSentEventInternal : BaseEvent

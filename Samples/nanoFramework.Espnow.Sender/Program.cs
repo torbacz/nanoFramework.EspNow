@@ -10,27 +10,41 @@ namespace nanoFramework.EspNow.Sender
     {
         public static void Main()
         {
+            byte[] localMasterKey = new byte[]
+            {
+                    0x10, 0x11, 0x12, 0x13,
+                    0x14, 0x15, 0x16, 0x17,
+                    0x18, 0x19, 0x1A, 0x1B,
+                    0x1C, 0x1D, 0x1E, 0x1F
+            };
+
             Debug.WriteLine("ESP-NOW sender starting...");
 
-            using (var controller = new EspNowController())
+            try
             {
+                var reciverMacAddress = new byte[] { 0xF4, 0x12, 0xFA, 0x5A, 0x24, 0xE0 };
+                var controller = new EspNowController();
                 controller.DataSent += Controller_DataSent;
-
-                controller.AddPeer(EspNowController.BROADCASTMAC, 0);
+                controller.AddPeer(reciverMacAddress, 0, true, localMasterKey);
 
                 int counter = 0;
-
                 while (true)
                 {
                     string message = "ping " + counter++;
                     byte[] payload = Encoding.UTF8.GetBytes(message);
 
-                    controller.Send(EspNowController.BROADCASTMAC, payload, payload.Length);
+                    controller.Send(reciverMacAddress, payload, payload.Length);
                     Debug.WriteLine("Sent: " + message);
 
                     Thread.Sleep(1000);
                 }
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error: {ex.Message}");
+            }
+
+            Thread.Sleep(Timeout.Infinite);
         }
 
         private static void Controller_DataSent(object sender, DataSentEventArgs e)
