@@ -6,7 +6,6 @@ using nanoFramework.EspNow;
 
 namespace nanoFramework.EspNow.Sender
 {
-    // TODO: Grab GNSS data from GPS and send it via ESPNOW
     public class Program
     {
         public static void Main()
