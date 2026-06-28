@@ -5,7 +5,6 @@ using System.Threading;
 
 namespace nanoFramework.EspNow.Receiver
 {
-    // TODO: Calculate distance from GPS data from reciver
     public class Program
     {
         public static void Main()
