@@ -6,6 +6,7 @@ using nanoFramework.EspNow;
 
 namespace nanoFramework.EspNow.Sender
 {
+    // TODO: Grab GNSS data from GPS and send it via ESPNOW
     public class Program
     {
         public static void Main()
@@ -22,7 +23,7 @@ namespace nanoFramework.EspNow.Sender
 
             try
             {
-                var reciverMacAddress = new byte[] { 0xF4, 0x12, 0xFA, 0x5A, 0x24, 0xE0 };
+                var reciverMacAddress = new byte[] { 0x84, 0xFC, 0xE6, 0x65, 0xA5, 0x10 };
                 var controller = new EspNowController();
                 controller.DataSent += Controller_DataSent;
                 controller.AddPeer(reciverMacAddress, 0, true, localMasterKey);

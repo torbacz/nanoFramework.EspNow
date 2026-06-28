@@ -108,7 +108,7 @@ namespace nanoFramework.EspNow
             }
         }
 
-        private void OnDataReceived(byte[] peerMac, byte[] data, int dataLen)
+        internal void OnDataReceived(byte[] peerMac, byte[] data, int dataLen)
         {
             var eh = this.DataReceived;
             if (eh != null)
@@ -117,7 +117,7 @@ namespace nanoFramework.EspNow
             }
         }
 
-        private void OnDataSent(byte[] peerMac, int sendStatus)
+        internal void OnDataSent(byte[] peerMac, int sendStatus)
         {
             var eh = this.DataSent;
             if (eh != null)
@@ -167,54 +167,11 @@ namespace nanoFramework.EspNow
             GC.SuppressFinalize(this);
         }
 
-
-        internal class EspNowEventHandler : IEventProcessor, IEventListener
-        {
-            private EspNowController controllerInstance;
-
-            public EspNowEventHandler(EspNowController controllerInstance)
-            {
-                this.controllerInstance = controllerInstance;
-            }
-
-            public void InitializeForEventSource()
-            {
-                // no op
-            }
-
-            public bool OnEvent(BaseEvent ev)
-            {
-                bool ret = false;
-
-                var dataRecvEvent = ev as DataRecvEventInternal;
-                if (dataRecvEvent != null)
-                {
-                    controllerInstance.OnDataReceived(dataRecvEvent.PeerMac, dataRecvEvent.Data, dataRecvEvent.DataLen);
-                    ret = true;
-                }
-                else
-                {
-                    var dataSentEvent = ev as DataSentEventInternal;
-                    if (dataSentEvent != null)
-                    {
-                        controllerInstance.OnDataSent(dataSentEvent.PeerMac, dataSentEvent.Status);
-                        ret = true;
-                    }
-                }
-
-                return ret;
-            }
-
-            [MethodImpl(MethodImplOptions.InternalCall)]
-            extern public BaseEvent ProcessEvent(uint data1, uint data2, DateTime time);
-        }
-
         [MethodImpl(MethodImplOptions.InternalCall)]
         private extern int NativeInitialize();
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private extern void NativeDispose(bool isDisposing);
-
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private extern int NativeEspNowSend(byte[] peerMac, byte[] data, int dataLen);

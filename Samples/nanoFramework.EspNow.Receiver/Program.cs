@@ -5,6 +5,7 @@ using System.Threading;
 
 namespace nanoFramework.EspNow.Receiver
 {
+    // TODO: Calculate distance from GPS data from reciver
     public class Program
     {
         public static void Main()
@@ -20,7 +21,7 @@ namespace nanoFramework.EspNow.Receiver
             Debug.WriteLine("ESP-NOW receiver starting...");
             try
             {
-                var senderMacAddress = new byte[] { 0x84, 0xFC, 0xE6, 0x65, 0xA5, 0x10 };
+                var senderMacAddress = new byte[] { 0xF4, 0x12, 0xFA, 0x5A, 0x24, 0xE0 };
                 var controller = new EspNowController();
                 controller.DataReceived += Controller_DataReceived;
                 controller.DataSent += Controller_DataSent;
