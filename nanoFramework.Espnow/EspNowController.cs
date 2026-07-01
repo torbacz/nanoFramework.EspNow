@@ -66,6 +66,14 @@ namespace nanoFramework.EspNow
         /// <param name="channel">WiFi channel to be used.</param>
         /// <param name="encrypted"><see langword="true"/> to enable ESP-NOW encryption for this peer.</param>
         /// <param name="localMasterKey">16-byte local master key used when encryption is enabled.</param>
+        /// <exception cref="ArgumentException">
+        /// <para><paramref name="peerMac"/> is not 6 bytes long.</para>
+        /// <para>-or-</para>
+        /// <para><paramref name="localMasterKey"/> is not 16 bytes long.</para>
+        /// <para>-or-</para>
+        /// <para>Trying to enable encryption for a broadcast peer [FF-FF-FF-FF-FF-FF].</para>
+        /// </exception>
+        /// <exception cref="EspNowException">Native ESP-NOW peer registration failed.</exception>
         public void AddPeer(
             byte[] peerMac,
             byte channel,
@@ -74,17 +82,17 @@ namespace nanoFramework.EspNow
         {
             if (peerMac != null && peerMac.Length != MacAddressLength)
             {
-                throw new ArgumentException("peerMac must be 6 bytes long", nameof(peerMac));
+                throw new ArgumentException();
             }
 
             if (localMasterKey != null && localMasterKey.Length != 16)
             {
-                throw new ArgumentException("localMasterKey must be 16 bytes long", nameof(localMasterKey));
+                throw new ArgumentException();
             }
 
             if (encrypted && IsBroadcastMac(peerMac))
             {
-                throw new ArgumentException("Cannot enable encryption for broadcast peer", nameof(peerMac));
+                throw new ArgumentException();
             }
 
             var nret = NativeEspNowAddPeer(peerMac, channel, encrypted, localMasterKey);
