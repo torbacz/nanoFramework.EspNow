@@ -16,11 +16,8 @@ namespace nanoFramework.EspNow
     {
         // keep in sync with nf-interpreter:src/HAL/Include/nanoHAL_v2.h
         private const int EVENT_ESPNOW = 150;
-
-        /// <summary>
-        /// Broadcast peer MAC address.
-        /// </summary>
-        public static readonly byte[] BROADCASTMAC = new byte[] { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+        private const int MacAddressLength = 6;
+        private const byte BroadcastMacByte = 0xff;
 
         /// <summary>
         /// DataSent event handler type definition.
@@ -67,11 +64,15 @@ namespace nanoFramework.EspNow
         /// </summary>
         /// <param name="peerMac">MAC address of peer.</param>
         /// <param name="channel">WiFi channel to be used.</param>
-        /// <param name="encrypted">True to enable ESP-NOW encryption for this peer.</param>
+        /// <param name="encrypted"><see langword="true"/> to enable ESP-NOW encryption for this peer.</param>
         /// <param name="localMasterKey">16-byte local master key used when encryption is enabled.</param>
-        public void AddPeer(byte[] peerMac, byte channel, bool encrypted, byte[] localMasterKey)
+        public void AddPeer(
+            byte[] peerMac,
+            byte channel,
+            bool encrypted,
+            byte[] localMasterKey)
         {
-            if (peerMac != null && peerMac.Length != 6)
+            if (peerMac != null && peerMac.Length != MacAddressLength)
             {
                 throw new ArgumentException("peerMac must be 6 bytes long", nameof(peerMac));
             }
@@ -81,7 +82,7 @@ namespace nanoFramework.EspNow
                 throw new ArgumentException("localMasterKey must be 16 bytes long", nameof(localMasterKey));
             }
 
-            if (encrypted && peerMac.Equals(BROADCASTMAC))
+            if (encrypted && IsBroadcastMac(peerMac))
             {
                 throw new ArgumentException("Cannot enable encryption for broadcast peer", nameof(peerMac));
             }
@@ -165,6 +166,24 @@ namespace nanoFramework.EspNow
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        private static bool IsBroadcastMac(byte[] mac)
+        {
+            if (mac == null || mac.Length != MacAddressLength)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < mac.Length; i++)
+            {
+                if (mac[i] != BroadcastMacByte)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
