@@ -42,9 +42,12 @@
   <Import Project="$(NanoFrameworkProjectSystemPath)NFProjectSystem.props" Condition="Exists('$(NanoFrameworkProjectSystemPath)NFProjectSystem.props')" />
   <ItemGroup>
     <Compile Include="DataReceivedEventArgs.cs" />
+    <Compile Include="DataRecvEventInternal.cs" />
     <Compile Include="DataSentEventArgs.cs" />
+    <Compile Include="DataSentEventInternal.cs" />
     <Compile Include="EspNowController.cs" />
-    <Compile Include="EspNowEventHandler.cs" />
+    <Compile Include="EspNowControllerEventListener.cs" />
+    <Compile Include="EspNowEventType.cs" />
     <Compile Include="EspNowException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -57,7 +60,7 @@
       <HintPath>..\packages\nanoFramework.CoreLibrary.1.17.11\lib\mscorlib.dll</HintPath>
     </Reference>
     <Reference Include="nanoFramework.Runtime.Events">
-      <HintPath>..\packages\nanoFramework.Runtime.Events.1.11.32\lib\nanoFramework.Runtime.Events.dll</HintPath>
+      <HintPath>..\packages\nanoFramework.Runtime.Events.1.11.37\lib\nanoFramework.Runtime.Events.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Import Project="$(NanoFrameworkProjectSystemPath)NFProjectSystem.CSharp.targets" Condition="Exists('$(NanoFrameworkProjectSystemPath)NFProjectSystem.CSharp.targets')" />
