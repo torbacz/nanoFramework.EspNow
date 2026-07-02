@@ -34,11 +34,6 @@
     <NF_GenerateSkeletonProjectName>nanoframework_espnow</NF_GenerateSkeletonProjectName>
     <Name>nanoFramework.EspNow</Name>
   </PropertyGroup>
-  <ItemGroup>
-    <NFMDP_PE_ExcludeClassByName Include="ThisAssembly">
-      <InProject>false</InProject>
-    </NFMDP_PE_ExcludeClassByName>
-  </ItemGroup>
   <Import Project="$(NanoFrameworkProjectSystemPath)NFProjectSystem.props" Condition="Exists('$(NanoFrameworkProjectSystemPath)NFProjectSystem.props')" />
   <ItemGroup>
     <Compile Include="DataReceivedEventArgs.cs" />
