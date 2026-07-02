@@ -31,7 +31,7 @@
   <PropertyGroup>
     <!-- override default options for MetaDataProcessor -->
     <NF_GenerateStubsDirectory>bin\$(Configuration)\Stubs</NF_GenerateStubsDirectory>
-    <NF_GenerateSkeletonProjectName>nanoFramework_espnow_native</NF_GenerateSkeletonProjectName>
+    <NF_GenerateSkeletonProjectName>nanoframework_espnow</NF_GenerateSkeletonProjectName>
     <Name>nanoFramework.EspNow</Name>
   </PropertyGroup>
   <ItemGroup>
