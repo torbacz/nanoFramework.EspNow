@@ -3,59 +3,84 @@
 // See LICENSE file in the project root for full license information.
 //
 
-using nanoFramework.Runtime.Events;
 using System;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace nanoFramework.EspNow
 {
     /// <summary>
     /// ESP-NOW controller class.
     /// </summary>
-    public class EspNowController : IDisposable
+    public sealed class EspNowController : IDisposable
     {
-        // keep in sync with nf-interpreter:src/HAL/Include/nanoHAL_v2.h
-        private const int EVENT_ESPNOW = 150;
         private const int MacAddressLength = 6;
         private const byte BroadcastMacByte = 0xff;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private static readonly EspNowControllerEventListener s_eventListener = new EspNowControllerEventListener();
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private static EspNowController s_instance;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private static readonly object s_syncLock = new object();
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private bool _disposed;
+
+        // this is used as the lock object 
+        // a lock is required because multiple threads can access the EspNowController
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly object _syncLock = new object();
+
         /// <summary>
-        /// DataSent event handler type definition.
+        /// <see cref="DataSent"/> event handler type definition.
         /// </summary>
         public delegate void DataSendEventHandler(object sender, DataSentEventArgs eventArgs);
 
         /// <summary>
-        /// Event raised after sending completed.
+        /// Event raised after data sending completed.
         /// </summary>
         public event DataSendEventHandler DataSent;
 
         /// <summary>
-        /// DataReceived event handler type definition.
+        /// <see cref="DataReceived"/> event handler type definition.
         /// </summary>
         public delegate void DataReceivedEventHandler(object sender, DataReceivedEventArgs eventArgs);
 
         /// <summary>
-        /// Event raised when data received.
+        /// Event raised when data is received.
         /// </summary>
         public event DataReceivedEventHandler DataReceived;
 
-        private bool isDisposed;
-        private EspNowEventHandler eventHandler;
-
         /// <summary>
-        /// Controller.
+        /// Represents an ESP-NOW controller.
         /// </summary>
+        /// <exception cref="InvalidOperationException">Only one <see cref="EspNowController"/> instance is allowed per device.</exception>"
         public EspNowController()
         {
-            // Add a native event processor.
-            eventHandler = new EspNowEventHandler(this);
-            EventSink.AddEventProcessor((EventCategory)EVENT_ESPNOW, eventHandler);
-            EventSink.AddEventListener((EventCategory)EVENT_ESPNOW, eventHandler);
-
-            var nret = NativeInitialize();
-            if (nret != 0)
+            lock (s_syncLock)
             {
-                throw new EspNowException(nret);
+                // Only allow one controller instance per device
+                if (s_instance != null)
+                {
+                    throw new InvalidOperationException();
+                }
+
+                // call native init to allow HAL/PAL inits related with ESP-NOW hardware
+                var initResult = NativeInitialize();
+
+                if (initResult != 0)
+                {
+                    throw new EspNowException(initResult);
+                }
+
+                // Set this as the singleton instance
+                s_instance = this;
+
+                // Register with the event listener to receive callbacks from native interrupts
+                s_eventListener.SetController(this);
             }
         }
 
@@ -80,25 +105,33 @@ namespace nanoFramework.EspNow
             bool encrypted,
             byte[] localMasterKey)
         {
-            if (peerMac != null && peerMac.Length != MacAddressLength)
+            if (peerMac != null
+                && peerMac.Length != MacAddressLength)
             {
                 throw new ArgumentException();
             }
 
-            if (localMasterKey != null && localMasterKey.Length != 16)
+            if (localMasterKey != null
+                && localMasterKey.Length != 16)
             {
                 throw new ArgumentException();
             }
 
-            if (encrypted && IsBroadcastMac(peerMac))
+            if (encrypted
+                && IsBroadcastMac(peerMac))
             {
                 throw new ArgumentException();
             }
 
-            var nret = NativeEspNowAddPeer(peerMac, channel, encrypted, localMasterKey);
-            if (nret != 0)
+            var addResult = NativeEspNowAddPeer(
+                peerMac,
+                channel,
+                encrypted,
+                localMasterKey);
+            
+            if (addResult != 0)
             {
-                throw new EspNowException(nret);
+                throw new EspNowException(addResult);
             }
         }
 
@@ -119,43 +152,58 @@ namespace nanoFramework.EspNow
 
         internal void OnDataReceived(byte[] peerMac, byte[] data, int dataLen)
         {
-            var eh = this.DataReceived;
-            if (eh != null)
+            DataReceivedEventHandler callbacks = null;
+
+            lock (_syncLock)
             {
-                eh(this, new DataReceivedEventArgs(peerMac, data, dataLen));
+                if (!_disposed)
+                {
+                    callbacks = DataReceived;
+                }
             }
+
+            callbacks?.Invoke(this, new DataReceivedEventArgs(
+                peerMac,
+                data,
+                dataLen));
         }
 
         internal void OnDataSent(byte[] peerMac, int sendStatus)
         {
-            var eh = this.DataSent;
-            if (eh != null)
+            DataSendEventHandler callbacks = null;
+
+            lock (_syncLock)
             {
-                eh(this, new DataSentEventArgs(peerMac, sendStatus));
+                if (!_disposed)
+                {
+                    callbacks = DataSent;
+                }
             }
+
+            callbacks?.Invoke(this, new DataSentEventArgs(
+                peerMac,
+                sendStatus));
         }
 
-        /// <summary>
-        /// Dispose()
-        /// </summary>
-        /// <param name="isDisposing">false on destructor call.</param>
-        protected virtual void Dispose(bool isDisposing)
+        private void Dispose(bool isDisposing)
         {
-            if (!isDisposed)
+            if (!_disposed)
             {
                 if (isDisposing)
                 {
-                    if (eventHandler != null)
+                    lock (s_syncLock)
                     {
-                        EventSink.RemoveEventProcessor((EventCategory)EVENT_ESPNOW, eventHandler);
+                        // Clear the singleton instance
+                        s_instance = null;
+
+                        // Unregister from the event listener
+                        s_eventListener.ClearController();
                     }
                 }
 
-                eventHandler = null;
-
                 NativeDispose(isDisposing);
 
-                isDisposed = true;
+                _disposed = true;
             }
         }
 
@@ -172,8 +220,15 @@ namespace nanoFramework.EspNow
         /// </summary>
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            lock (_syncLock)
+            {
+                if (!_disposed)
+                {
+                    Dispose(true);
+
+                    GC.SuppressFinalize(this);
+                }
+            }
         }
 
         private static bool IsBroadcastMac(byte[] mac)
@@ -206,25 +261,4 @@ namespace nanoFramework.EspNow
         [MethodImpl(MethodImplOptions.InternalCall)]
         private extern int NativeEspNowAddPeer(byte[] peerMac, byte channel, bool encrypted, byte[] localMasterKey);
     }
-
-    internal class DataSentEventInternal : BaseEvent
-    {
-        // these fields are set on native side
-#pragma warning disable 0649
-        public byte[] PeerMac;
-        public int Status;
-#pragma warning restore 0649
-
-    }
-
-    internal class DataRecvEventInternal : BaseEvent
-    {
-        // these fields are set on native side
-#pragma warning disable 0649
-        public byte[] PeerMac;
-        public byte[] Data;
-        public int DataLen;
-#pragma warning restore 0649
-    }
-
 }
