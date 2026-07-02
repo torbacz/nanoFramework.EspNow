@@ -34,7 +34,7 @@
   <PropertyGroup>
     <!-- override default options for MetaDataProcessor -->
     <NF_GenerateStubsDirectory>bin\$(Configuration)\Stubs</NF_GenerateStubsDirectory>
-    <NF_GenerateSkeletonProjectName>nanoframework_espnow</NF_GenerateSkeletonProjectName>
+    <NF_GenerateSkeletonProjectName>nf_espnow</NF_GenerateSkeletonProjectName>
     <Name>nanoFramework.EspNow</Name>
   </PropertyGroup>
   <Import Project="$(NanoFrameworkProjectSystemPath)NFProjectSystem.props" Condition="Exists('$(NanoFrameworkProjectSystemPath)NFProjectSystem.props')" />
