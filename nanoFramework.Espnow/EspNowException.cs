@@ -12,9 +12,9 @@ namespace nanoFramework.EspNow
     /// </summary>
     public class EspNowException : Exception
     {
-        public const int ErrorEspNowInit = 10001;
-        public const int ErrorInvalidPeer = 10002;
-        public const int ErrorAddPeer = 10003;
+        internal const int ErrorEspNowInit = 10001;
+        internal const int ErrorInvalidPeer = 10002;
+        internal const int ErrorAddPeer = 10003;
 
         /// <summary>
         /// Native ESP-NOW error code.
