@@ -6,7 +6,7 @@
                                                                                
 ===================================================================================
 
-API docs: https://docs.nanoframework.net/api/nanoFramework.Espnow.html
+API docs: https://docs.nanoframework.net/api/nanoFramework.EspNow.html
 
 Browse our samples repository: https://github.com/nanoframework/samples
 
