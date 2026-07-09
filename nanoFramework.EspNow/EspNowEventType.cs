@@ -7,7 +7,7 @@ namespace nanoFramework.EspNow
 {
     internal enum EspNowEventType : byte
     {
-        DataSent = 0,
-        DataReceived = 1
+        DataSent = 1,
+        DataReceived = 2
     }
 }

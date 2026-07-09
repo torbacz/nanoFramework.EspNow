@@ -6,6 +6,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using nanoFramework.Runtime.Events;
 
 namespace nanoFramework.EspNow
 {
@@ -18,9 +19,6 @@ namespace nanoFramework.EspNow
         private const byte BroadcastMacByte = 0xff;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private static readonly EspNowControllerEventListener s_eventListener = new EspNowControllerEventListener();
-
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private static EspNowController s_instance;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -29,10 +27,13 @@ namespace nanoFramework.EspNow
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private bool _disposed;
 
-        // this is used as the lock object 
+        // this is used as the lock object
         // a lock is required because multiple threads can access the EspNowController
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly object _syncLock = new object();
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly EspNowControllerEventListener _eventHandler;
 
         /// <summary>
         /// <see cref="DataSent"/> event handler type definition.
@@ -80,7 +81,9 @@ namespace nanoFramework.EspNow
                 s_instance = this;
 
                 // Register with the event listener to receive callbacks from native interrupts
-                s_eventListener.SetController(this);
+                _eventHandler = new EspNowControllerEventListener(this);
+                EventSink.AddEventProcessor(EventCategory.EspNow, _eventHandler);
+                EventSink.AddEventListener(EventCategory.EspNow, _eventHandler);
             }
         }
 
@@ -196,8 +199,8 @@ namespace nanoFramework.EspNow
                         // Clear the singleton instance
                         s_instance = null;
 
-                        // Unregister from the event listener
-                        s_eventListener.ClearController();
+                        EventSink.RemoveEventProcessor(EventCategory.EspNow, _eventHandler);
+                        EventSink.RemoveEventListener(EventCategory.EspNow, _eventHandler);
                     }
                 }
 
