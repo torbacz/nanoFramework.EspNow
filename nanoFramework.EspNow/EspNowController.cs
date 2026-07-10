@@ -35,25 +35,128 @@ namespace nanoFramework.EspNow
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly EspNowControllerEventListener _eventHandler;
 
-        /// <summary>
-        /// <see cref="DataSent"/> event handler type definition.
-        /// </summary>
-        public delegate void DataSendEventHandler(object sender, DataSentEventArgs eventArgs);
+        private DataSendEventHandler _callbacksDataSentEvent = null;
+        private DataReceivedEventHandler _callbacksDataReceivedEvent = null;
 
         /// <summary>
         /// Event raised after data sending completed.
         /// </summary>
-        public event DataSendEventHandler DataSent;
+        public event DataSendEventHandler DataSent
+        {
+            add
+            {
+                lock (_syncLock)
+                {
+                    if (_disposed)
+                    {
+#pragma warning disable S3877 // OK to throw this here
+                        throw new ObjectDisposedException();
+#pragma warning restore S3877 // Exceptions should not be thrown from unexpected methods
+                    }
 
-        /// <summary>
-        /// <see cref="DataReceived"/> event handler type definition.
-        /// </summary>
-        public delegate void DataReceivedEventHandler(object sender, DataReceivedEventArgs eventArgs);
+                    DataSendEventHandler callbacksOld = _callbacksDataSentEvent;
+                    DataSendEventHandler callbacksNew = (DataSendEventHandler)Delegate.Combine(callbacksOld, value);
+
+                    try
+                    {
+                        _callbacksDataSentEvent = callbacksNew;
+                    }
+                    catch
+                    {
+                        _callbacksDataSentEvent = callbacksOld;
+
+                        throw;
+                    }
+                }
+            }
+
+            remove
+            {
+                lock (_syncLock)
+                {
+                    if (_disposed)
+                    {
+#pragma warning disable S3877 // OK to throw this here
+                        throw new ObjectDisposedException();
+#pragma warning restore S3877 // Exceptions should not be thrown from unexpected methods
+                    }
+
+                    DataSendEventHandler callbacksOld = _callbacksDataSentEvent;
+                    DataSendEventHandler callbacksNew = (DataSendEventHandler)Delegate.Remove(callbacksOld, value);
+
+                    try
+                    {
+                        _callbacksDataSentEvent = callbacksNew;
+                    }
+                    catch
+                    {
+                        _callbacksDataSentEvent = callbacksOld;
+
+                        throw;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Event raised when data is received.
         /// </summary>
-        public event DataReceivedEventHandler DataReceived;
+        public event DataReceivedEventHandler DataReceived
+        {
+            add
+            {
+                lock (_syncLock)
+                {
+                    if (_disposed)
+                    {
+#pragma warning disable S3877 // OK to throw this here
+                        throw new ObjectDisposedException();
+#pragma warning restore S3877 // Exceptions should not be thrown from unexpected methods
+                    }
+
+                    DataReceivedEventHandler callbacksOld = _callbacksDataReceivedEvent;
+                    DataReceivedEventHandler callbacksNew = (DataReceivedEventHandler)Delegate.Combine(callbacksOld, value);
+
+                    try
+                    {
+                        _callbacksDataReceivedEvent = callbacksNew;
+                    }
+                    catch
+                    {
+                        _callbacksDataReceivedEvent = callbacksOld;
+
+                        throw;
+                    }
+                }
+            }
+
+            remove
+            {
+                lock (_syncLock)
+                {
+                    if (_disposed)
+                    {
+#pragma warning disable S3877 // OK to throw this here
+                        throw new ObjectDisposedException();
+#pragma warning restore S3877 // Exceptions should not be thrown from unexpected methods
+                    }
+
+                    DataReceivedEventHandler callbacksOld = _callbacksDataReceivedEvent;
+                    DataReceivedEventHandler callbacksNew = (DataReceivedEventHandler)Delegate.Remove(callbacksOld, value);
+
+                    try
+                    {
+                        _callbacksDataReceivedEvent = callbacksNew;
+                    }
+                    catch
+                    {
+                        _callbacksDataReceivedEvent = callbacksOld;
+
+                        throw;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Represents an ESP-NOW controller.
@@ -167,7 +270,7 @@ namespace nanoFramework.EspNow
             {
                 if (!_disposed)
                 {
-                    callbacks = DataReceived;
+                    callbacks = _callbacksDataReceivedEvent;
                 }
             }
 
@@ -185,7 +288,7 @@ namespace nanoFramework.EspNow
             {
                 if (!_disposed)
                 {
-                    callbacks = DataSent;
+                    callbacks = _callbacksDataSentEvent;
                 }
             }
 

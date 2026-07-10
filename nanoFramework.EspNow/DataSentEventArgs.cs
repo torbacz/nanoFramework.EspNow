@@ -1,4 +1,4 @@
-﻿//
+//
 // Copyright (c) .NET Foundation and Contributors
 // See LICENSE file in the project root for full license information.
 //
@@ -28,24 +28,24 @@ namespace nanoFramework.EspNow
     /// </summary>
     public class DataSentEventArgs : EventArgs
     {
+        private readonly byte[] _peerMac;
+        private readonly EspNowSendStatus _status;
+
+        internal DataSentEventArgs(byte[] peerMac, EspNowSendStatus status)
+        {
+            _peerMac = peerMac;
+            _status = status;
+        }
+
         /// <summary>
         /// MAC address of peer data was sent to.
         /// </summary>
-        public byte[] PeerMac;
+        public byte[] PeerMac { get => _peerMac; }
 
         /// <summary>
         /// Status of sending.
         /// See esp_now_send_status_t in esp_now.h
         /// </summary>
-        public EspNowSendStatus Status;
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        public DataSentEventArgs(byte[] peerMac, EspNowSendStatus status)
-        {
-            this.PeerMac = peerMac;
-            this.Status = status;
-        }
+        public EspNowSendStatus Status { get => _status; }
     }
 }
