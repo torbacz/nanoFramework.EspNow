@@ -30,11 +30,18 @@ namespace nanoFramework.EspNow.Sender
                 int counter = 0;
                 while (true)
                 {
-                    string message = "ping " + counter++;
-                    byte[] payload = Encoding.UTF8.GetBytes(message);
+                    try
+                    {
+                        string message = "ping " + counter++;
+                        byte[] payload = Encoding.UTF8.GetBytes(message);
 
-                    controller.Send(reciverMacAddress, payload, payload.Length);
-                    Debug.WriteLine("Sent: " + message);
+                        controller.Send(reciverMacAddress, payload, payload.Length);
+                        Debug.WriteLine("Sent: " + message);
+                    }
+                    catch (Exception sendEx)
+                    {
+                        Debug.WriteLine("Send error: " + sendEx.Message);
+                    }
 
                     Thread.Sleep(1000);
                 }

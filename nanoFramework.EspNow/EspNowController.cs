@@ -95,6 +95,8 @@ namespace nanoFramework.EspNow
         /// <param name="encrypted"><see langword="true"/> to enable ESP-NOW encryption for this peer.</param>
         /// <param name="localMasterKey">16-byte local master key used when encryption is enabled.</param>
         /// <exception cref="ArgumentException">
+        /// <para><paramref name="peerMac"/> is <see langword="null"/>.</para>
+        /// <para>-or-</para>
         /// <para><paramref name="peerMac"/> is not 6 bytes long.</para>
         /// <para>-or-</para>
         /// <para><paramref name="localMasterKey"/> is not 16 bytes long.</para>
@@ -108,8 +110,12 @@ namespace nanoFramework.EspNow
             bool encrypted,
             byte[] localMasterKey)
         {
-            if (peerMac != null
-                && peerMac.Length != MacAddressLength)
+            if (peerMac == null)
+            {
+                throw new ArgumentException();
+            }
+
+            if (peerMac.Length != MacAddressLength)
             {
                 throw new ArgumentException();
             }
@@ -185,7 +191,7 @@ namespace nanoFramework.EspNow
 
             callbacks?.Invoke(this, new DataSentEventArgs(
                 peerMac,
-                sendStatus));
+                (EspNowSendStatus)sendStatus));
         }
 
         private void Dispose(bool isDisposing)

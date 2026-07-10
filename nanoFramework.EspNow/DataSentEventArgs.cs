@@ -8,6 +8,22 @@ using System;
 namespace nanoFramework.EspNow
 {
     /// <summary>
+    /// ESP-NOW send status.
+    /// </summary>
+    public enum EspNowSendStatus
+    {
+        /// <summary>
+        /// Send completed successfully.
+        /// </summary>
+        Success = 0,
+
+        /// <summary>
+        /// Send failed.
+        /// </summary>
+        Fail = 1
+    }
+
+    /// <summary>
     /// Container for DataSent event data.
     /// </summary>
     public class DataSentEventArgs : EventArgs
@@ -21,12 +37,12 @@ namespace nanoFramework.EspNow
         /// Status of sending.
         /// See esp_now_send_status_t in esp_now.h
         /// </summary>
-        public int Status;
+        public EspNowSendStatus Status;
 
         /// <summary>
         /// Constructor.
         /// </summary>
-        public DataSentEventArgs(byte[] peerMac, int status)
+        public DataSentEventArgs(byte[] peerMac, EspNowSendStatus status)
         {
             this.PeerMac = peerMac;
             this.Status = status;
