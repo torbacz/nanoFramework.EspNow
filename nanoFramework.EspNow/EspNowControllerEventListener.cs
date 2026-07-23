@@ -24,22 +24,9 @@ namespace nanoFramework.EspNow
 
         public bool OnEvent(BaseEvent ev)
         {
-            if (ev is DataRecvEventInternal dataRecvEvent)
+            if (ev is DataRecvEventInternal)
             {
-                _controller.OnDataReceived(
-                    dataRecvEvent.PeerMac,
-                    dataRecvEvent.Data,
-                    dataRecvEvent.DataLen);
-
-                return true;
-            }
-
-            if (ev is DataSentEventInternal dataSentEvent)
-            {
-                _controller.OnDataSent(
-                    dataSentEvent.PeerMac,
-                    dataSentEvent.Status);
-
+                _controller.OnDataAvailable();
                 return true;
             }
 

@@ -15,6 +15,7 @@ namespace nanoFramework.EspNow
         internal const int ErrorEspNowInit = 10001;
         internal const int ErrorInvalidPeer = 10002;
         internal const int ErrorAddPeer = 10003;
+        internal const int ErrorReceiveTimeout = 10004;
 
         /// <summary>
         /// Native ESP-NOW error code.
@@ -41,6 +42,8 @@ namespace nanoFramework.EspNow
                     return "Invalid ESP-NOW peer";
                 case ErrorAddPeer:
                     return "ESP-NOW add peer failed";
+                case ErrorReceiveTimeout:
+                    return "ESP-NOW receive timed out";
                 default:
                     return esp_err.ToString();
             }

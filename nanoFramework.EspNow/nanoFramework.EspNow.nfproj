@@ -42,9 +42,6 @@
     <Compile Include="DataReceivedEventArgs.cs" />
     <Compile Include="DataReceivedEventHandler.cs" />
     <Compile Include="DataRecvEventInternal.cs" />
-    <Compile Include="DataSendEventHandler.cs" />
-    <Compile Include="DataSentEventArgs.cs" />
-    <Compile Include="DataSentEventInternal.cs" />
     <Compile Include="EspNowController.cs" />
     <Compile Include="EspNowControllerEventListener.cs" />
     <Compile Include="EspNowEventType.cs" />
