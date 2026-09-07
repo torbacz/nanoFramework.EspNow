@@ -182,7 +182,9 @@ namespace nanoFramework.EspNow
                 }
 
                 // Set this as the singleton instance
+#pragma warning disable S3010 // Static fields should not be updated in constructors
                 s_instance = this;
+#pragma warning restore S3010 // Static fields should not be updated in constructors
 
                 // Register with the event listener to receive callbacks from native interrupts
                 s_eventListener.SetController(this);
@@ -399,7 +401,9 @@ namespace nanoFramework.EspNow
                     lock (s_syncLock)
                     {
                         // Clear the singleton instance
+#pragma warning disable S2696 // Instance members should not write to "static" fields
                         s_instance = null;
+#pragma warning restore S2696 // Instance members should not write to "static" fields
 
                         s_eventListener.ClearController();
                     }
