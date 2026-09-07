@@ -39,6 +39,8 @@ variables:
     value: true  
   - name: nugetPackageName
     value: 'nanoFramework.EspNow'
+    
+jobs:
 
 ##############################
 - job: Build_Library
@@ -73,10 +75,8 @@ variables:
 ##################################
 # report build failure to Discord
 - job: Report_Build_Failure
-  
   dependsOn:
-  - Build_Library
-  - Update_Dependents
+    - Build_Library
   condition: failed('Build_Library')
 
   pool:
