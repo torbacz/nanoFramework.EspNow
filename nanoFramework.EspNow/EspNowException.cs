@@ -1,4 +1,4 @@
-﻿//
+//
 // Copyright (c) .NET Foundation and Contributors
 // See LICENSE file in the project root for full license information.
 //
@@ -12,14 +12,25 @@ namespace nanoFramework.EspNow
     /// </summary>
     public class EspNowException : Exception
     {
-        internal const int ErrorEspNowInit = 10001;
-        internal const int ErrorInvalidPeer = 10002;
-        internal const int ErrorAddPeer = 10003;
-        internal const int ErrorReceiveTimeout = 10004;
-
         /// <summary>
-        /// Native ESP-NOW error code.
+        /// Native ESP-NOW error code (a raw esp_err_t value from the ESP-IDF).
         /// </summary>
+        /// <remarks>
+        /// Common values returned by the ESP-IDF ESP-NOW APIs:
+        /// <list type="bullet">
+        /// <item><description>ESP-NOW is not initialized (ESP_ERR_ESPNOW_NOT_INIT = 0x3065).</description></item>
+        /// <item><description>Invalid argument (ESP_ERR_ESPNOW_ARG = 0x3066).</description></item>
+        /// <item><description>Out of memory (ESP_ERR_ESPNOW_NO_MEM = 0x3067).</description></item>
+        /// <item><description>ESP-NOW peer list is full (ESP_ERR_ESPNOW_FULL = 0x3068).</description></item>
+        /// <item><description>ESP-NOW peer is not found (ESP_ERR_ESPNOW_NOT_FOUND = 0x3069).</description></item>
+        /// <item><description>Internal error (ESP_ERR_ESPNOW_INTERNAL = 0x306A).</description></item>
+        /// <item><description>ESP-NOW peer has already been added (ESP_ERR_ESPNOW_EXIST = 0x306B).</description></item>
+        /// <item><description>Interface error, Wi-Fi and ESP-NOW must run on the same interface (ESP_ERR_ESPNOW_IF = 0x306C).</description></item>
+        /// <item><description>Channel error (ESP_ERR_ESPNOW_CHAN = 0x306D).</description></item>
+        /// <item><description>Out of memory, generic ESP-IDF error (ESP_ERR_NO_MEM = 0x101).</description></item>
+        /// <item><description>Invalid state, e.g. the controller is already initialized, generic ESP-IDF error (ESP_ERR_INVALID_STATE = 0x103).</description></item>
+        /// </list>
+        /// </remarks>
         public int esp_err;
 
         /// <summary>
@@ -27,26 +38,8 @@ namespace nanoFramework.EspNow
         /// </summary>
         /// <param name="esp_err">Native ESP-NOW error code.</param>
         public EspNowException(int esp_err)
-            : base(GetMessage(esp_err))
         {
             this.esp_err = esp_err;
-        }
-
-        private static string GetMessage(int esp_err)
-        {
-            switch (esp_err)
-            {
-                case ErrorEspNowInit:
-                    return "ESP-NOW init failed";
-                case ErrorInvalidPeer:
-                    return "Invalid ESP-NOW peer";
-                case ErrorAddPeer:
-                    return "ESP-NOW add peer failed";
-                case ErrorReceiveTimeout:
-                    return "ESP-NOW receive timed out";
-                default:
-                    return esp_err.ToString();
-            }
         }
     }
 }
