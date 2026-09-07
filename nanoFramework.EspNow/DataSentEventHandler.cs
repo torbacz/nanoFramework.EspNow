@@ -11,7 +11,7 @@ namespace nanoFramework.EspNow
     /// </summary>
     /// <param name="sender">The sender of the event, which is the <see cref="EspNowController"/> object.</param>
     /// <param name="e">A <see cref="DataSentEventArgs"/> object that contains the event data.</param>
-    public delegate void DataSendEventHandler(
+    public delegate void DataSentEventHandler(
         object sender,
         DataSentEventArgs e);
 }

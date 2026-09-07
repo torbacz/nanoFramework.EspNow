@@ -41,9 +41,11 @@
   <ItemGroup>
     <Compile Include="DataReceivedEventArgs.cs" />
     <Compile Include="DataReceivedEventHandler.cs" />
-    <Compile Include="DataRecvEventInternal.cs" />
+    <Compile Include="DataSentEventArgs.cs" />
+    <Compile Include="DataSentEventHandler.cs" />
     <Compile Include="EspNowController.cs" />
-    <Compile Include="EspNowControllerEventListener.cs" />
+    <Compile Include="EspNowEvent.cs" />
+    <Compile Include="EspNowEventListener.cs" />
     <Compile Include="EspNowEventType.cs" />
     <Compile Include="EspNowException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

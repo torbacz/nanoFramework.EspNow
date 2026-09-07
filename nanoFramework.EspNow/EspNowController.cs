@@ -1,12 +1,11 @@
-﻿//
+//
 // Copyright (c) .NET Foundation and Contributors
 // See LICENSE file in the project root for full license information.
 //
 
 using System;
-using System.Runtime.CompilerServices;
 using System.Diagnostics;
-using nanoFramework.Runtime.Events;
+using System.Runtime.CompilerServices;
 
 namespace nanoFramework.EspNow
 {
@@ -25,6 +24,9 @@ namespace nanoFramework.EspNow
         private static readonly object s_syncLock = new object();
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private static readonly EspNowEventListener s_eventListener = new EspNowEventListener();
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private bool _disposed;
 
         // this is used as the lock object
@@ -32,10 +34,8 @@ namespace nanoFramework.EspNow
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly object _syncLock = new object();
 
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly EspNowControllerEventListener _eventHandler;
-
         private DataReceivedEventHandler _callbacksDataReceivedEvent = null;
+        private DataSentEventHandler _callbacksDataSentEvent = null;
 
         /// <summary>
         /// Event raised when data is received.
@@ -98,9 +98,71 @@ namespace nanoFramework.EspNow
         }
 
         /// <summary>
+        /// Event raised when a previously sent packet completes at the MAC layer (either delivered or failed). 
+        /// Only one send is expected to be in flight at a time.
+        /// </summary>
+        public event DataSentEventHandler DataSent
+        {
+            add
+            {
+                lock (_syncLock)
+                {
+                    if (_disposed)
+                    {
+#pragma warning disable S3877 // OK to throw this here
+                        throw new ObjectDisposedException();
+#pragma warning restore S3877 // Exceptions should not be thrown from unexpected methods
+                    }
+
+                    DataSentEventHandler callbacksOld = _callbacksDataSentEvent;
+                    DataSentEventHandler callbacksNew = (DataSentEventHandler)Delegate.Combine(callbacksOld, value);
+
+                    try
+                    {
+                        _callbacksDataSentEvent = callbacksNew;
+                    }
+                    catch
+                    {
+                        _callbacksDataSentEvent = callbacksOld;
+
+                        throw;
+                    }
+                }
+            }
+
+            remove
+            {
+                lock (_syncLock)
+                {
+                    if (_disposed)
+                    {
+#pragma warning disable S3877 // OK to throw this here
+                        throw new ObjectDisposedException();
+#pragma warning restore S3877 // Exceptions should not be thrown from unexpected methods
+                    }
+
+                    DataSentEventHandler callbacksOld = _callbacksDataSentEvent;
+                    DataSentEventHandler callbacksNew = (DataSentEventHandler)Delegate.Remove(callbacksOld, value);
+
+                    try
+                    {
+                        _callbacksDataSentEvent = callbacksNew;
+                    }
+                    catch
+                    {
+                        _callbacksDataSentEvent = callbacksOld;
+
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Represents an ESP-NOW controller.
         /// </summary>
         /// <exception cref="InvalidOperationException">Only one <see cref="EspNowController"/> instance is allowed per device.</exception>"
+        /// <exception cref="EspNowException">Native ESP-NOW initialization failed.</exception>
         public EspNowController()
         {
             lock (s_syncLock)
@@ -123,12 +185,9 @@ namespace nanoFramework.EspNow
                 s_instance = this;
 
                 // Register with the event listener to receive callbacks from native interrupts
-                _eventHandler = new EspNowControllerEventListener(this);
-                EventSink.AddEventProcessor(EventCategory.EspNow, _eventHandler);
-                EventSink.AddEventListener(EventCategory.EspNow, _eventHandler);
+                s_eventListener.SetController(this);
             }
         }
-
 
         /// <summary>
         /// Add peer to which data will be sent.
@@ -200,7 +259,7 @@ namespace nanoFramework.EspNow
                 channel,
                 encrypted,
                 localMasterKey);
-            
+
             if (addResult != 0)
             {
                 throw new EspNowException(addResult);
@@ -208,11 +267,14 @@ namespace nanoFramework.EspNow
         }
 
         /// <summary>
-        /// Send data to already registered peer.
+        /// Send data to already registered peer. Fire-and-forget: this call only queues the
+        /// frame for transmission. Subscribe to <see cref="DataSent"/> to be notified of the
+        /// MAC-layer delivery result.
         /// </summary>
         /// <param name="peerMac">MAC address of already added peer.</param>
         /// <param name="data">Data to be sent.</param>
         /// <param name="dataLen">Length of data.</param>
+        /// <exception cref="EspNowException">Native ESP-NOW send failed.</exception>
         public void Send(byte[] peerMac, byte[] data, int dataLen)
         {
             var nret = NativeEspNowSend(peerMac, data, dataLen);
@@ -225,6 +287,15 @@ namespace nanoFramework.EspNow
         /// <summary>
         /// Reads the next complete packet from the native receive queue.
         /// </summary>
+        /// <param name="timeout">
+        /// Milliseconds to wait for a packet. <c>0</c> polls the queue and returns immediately.
+        /// </param>
+        /// <returns>
+        /// The next received packet, or <see langword="null"/> when <paramref name="timeout"/>
+        /// is <c>0</c> and no packet was queued.
+        /// </returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="timeout"/> is negative.</exception>
+        /// <exception cref="TimeoutException">No packet arrived within <paramref name="timeout"/>.</exception>
         public DataReceivedEventArgs ReadPacket(int timeout)
         {
             if (timeout < 0)
@@ -243,9 +314,10 @@ namespace nanoFramework.EspNow
                 var data = new byte[NativeGetMaximumDataLength()];
                 var dataLen = NativeReadPacket(peerMac, data, timeout);
 
-                if (dataLen < 0)
+                if (dataLen == 0)
                 {
-                    throw new EspNowException(-dataLen);
+                    // non-blocking poll (timeout == 0) found nothing queued
+                    return null;
                 }
 
                 if (dataLen != data.Length)
@@ -268,7 +340,7 @@ namespace nanoFramework.EspNow
         /// </summary>
         public int ReceiveOverflowCount => NativeGetReceiveOverflowCount();
 
-        internal void OnDataAvailable()
+        internal void OnDataReceivedInternal()
         {
             DataReceivedEventHandler callbacks;
 
@@ -284,12 +356,39 @@ namespace nanoFramework.EspNow
 
             try
             {
-                callbacks.Invoke(this, ReadPacket(0));
+                // Avoid calling this under a lock to prevent a potential lock inversion.
+                var packet = ReadPacket(0);
+
+                if (packet != null)
+                {
+                    callbacks.Invoke(this, packet);
+                }
             }
-            catch (EspNowException)
+            catch (ObjectDisposedException)
             {
-                // The packet notification can race with disposal or another read.
+                // Dispose() raced with this notification.
             }
+        }
+
+        internal void OnDataSentInternal()
+        {
+            DataSentEventHandler callbacks;
+
+            lock (_syncLock)
+            {
+                if (_disposed || _callbacksDataSentEvent == null)
+                {
+                    return;
+                }
+
+                callbacks = _callbacksDataSentEvent;
+            }
+
+            var peerMac = new byte[MacAddressLength];
+            var status = (EspNowSendStatus)NativeReadSendStatus(peerMac);
+
+            // Avoid calling this under a lock to prevent a potential lock inversion.
+            callbacks.Invoke(this, new DataSentEventArgs(peerMac, status));
         }
 
         private void Dispose(bool isDisposing)
@@ -303,8 +402,7 @@ namespace nanoFramework.EspNow
                         // Clear the singleton instance
                         s_instance = null;
 
-                        EventSink.RemoveEventProcessor(EventCategory.EspNow, _eventHandler);
-                        EventSink.RemoveEventListener(EventCategory.EspNow, _eventHandler);
+                        s_eventListener.ClearController();
                     }
                 }
 
@@ -376,5 +474,8 @@ namespace nanoFramework.EspNow
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private extern int NativeGetReceiveOverflowCount();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private extern int NativeReadSendStatus(byte[] peerMac);
     }
 }
