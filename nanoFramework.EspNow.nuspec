@@ -4,8 +4,8 @@
     <id>nanoFramework.EspNow</id>
     <version>$version$</version>
     <title>nanoFramework.EspNow</title>
-    <authors>nanoFramework project contributors</authors>
-    <owners>nanoFramework,dotnetfoundation</owners>
+    <authors>nanoFramework</authors>
+    <owners>nanoFramework</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="file">LICENSE.md</license>
     <releaseNotes>
