@@ -6,7 +6,7 @@ using nanoFramework.EspNow;
 
 namespace nanoFramework.EspNow.Sender
 {
-    public class Program
+    public static class Program
     {
         public static void Main()
         {

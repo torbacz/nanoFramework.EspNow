@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace nanoFramework.EspNow.Receiver
 {
-    public class Program
+    public static class Program
     {
         public static void Main()
         {
