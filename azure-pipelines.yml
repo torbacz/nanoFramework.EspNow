@@ -7,7 +7,7 @@ trigger:
       - main
       - develop
       - release-*
-      - can_vnext
+
   paths:
     exclude:
       - .gitignore
@@ -37,27 +37,59 @@ variables:
   - group: sign-client-credentials
   - name: DOTNET_NOLOGO
     value: true  
-  - name: buildPlatform
-    value: 'Any CPU'  
-  - name: buildConfiguration
-    value: 'Release'
-  - name: solution
-    value: 'nanoFramework.EspNow.sln'
   - name: nugetPackageName
     value: 'nanoFramework.EspNow'
 
-steps:
+##############################
+- job: Build_Library
+  condition: >-
+    and(
+      not(startsWith(variables['Build.SourceBranch'], 'refs/tags/v')),
+      or(
+        eq(variables['UPDATE_DEPENDENTS'], 'false'),
+        eq(variables['StartReleaseCandidate'], 'true')
+      )
+    )
+  pool:
+    vmImage: 'windows-latest'
 
-# step from template @ nf-tools repo
-# all build, update and publish steps
-- template: azure-pipelines-templates/class-lib-build.yml@templates
-  parameters:
-    sonarCloudProject: 'nanoframework_nanoFramework.EspNow'
+  variables:
+    - group: sign-client-credentials
+    - name: buildPlatform
+      value: 'Any CPU'  
+    - name: buildConfiguration
+      value: 'Release'
+    - name: solution
+      value: 'nanoFramework.EspNow.sln'
 
-# step from template @ nf-tools repo
-# report error
-- template: azure-pipelines-templates/discord-webhook-task.yml@templates  
-  parameters:
-    status: 'failure'
-    webhookUrl: '$(DiscordWebhook)'
-    message: ''
+  steps:
+  
+  # step from template @ nf-tools repo
+  # all build, update and publish steps
+  - template: azure-pipelines-templates/class-lib-build.yml@templates
+    parameters:
+      sonarCloudProject: 'nanoframework_nanoFramework.EspNow'
+
+##################################
+# report build failure to Discord
+- job: Report_Build_Failure
+  
+  dependsOn:
+  - Build_Library
+  - Update_Dependents
+  condition: failed('Build_Library')
+
+  pool:
+    vmImage: 'windows-latest'
+
+  steps:
+  
+  - checkout: self
+
+  # step from template @ nf-tools repo
+  # report error
+  - template: azure-pipelines-templates/discord-webhook-task.yml@templates  
+    parameters:
+      status: 'failure'
+      webhookUrl: '$(DiscordWebhook)'
+      message: ''
