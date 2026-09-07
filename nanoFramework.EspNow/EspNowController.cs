@@ -267,9 +267,8 @@ namespace nanoFramework.EspNow
         }
 
         /// <summary>
-        /// Send data to already registered peer. Fire-and-forget: this call only queues the
-        /// frame for transmission. Subscribe to <see cref="DataSent"/> to be notified of the
-        /// MAC-layer delivery result.
+        /// Send data to already registered peer. Fire-and-forget: this call only queues the frame for transmission. 
+        /// Subscribe to <see cref="DataSent"/> to be notified of the MAC-layer delivery result.
         /// </summary>
         /// <param name="peerMac">MAC address of already added peer.</param>
         /// <param name="data">Data to be sent.</param>
