@@ -12,6 +12,8 @@ namespace nanoFramework.EspNow
     /// </summary>
     public class EspNowException : Exception
     {
+        private readonly int _espErr;
+
         /// <summary>
         /// Native ESP-NOW error code (a raw esp_err_t value from the ESP-IDF).
         /// </summary>
@@ -31,15 +33,15 @@ namespace nanoFramework.EspNow
         /// <item><description>Invalid state, e.g. the controller is already initialized, generic ESP-IDF error (ESP_ERR_INVALID_STATE = 0x103).</description></item>
         /// </list>
         /// </remarks>
-        public int esp_err;
+        public int EspErr { get => _espErr; }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="esp_err">Native ESP-NOW error code.</param>
-        public EspNowException(int esp_err)
+        /// <param name="espErr">Native ESP-NOW error code.</param>
+        public EspNowException(int espErr)
         {
-            this.esp_err = esp_err;
+            _espErr = espErr;
         }
     }
 }
